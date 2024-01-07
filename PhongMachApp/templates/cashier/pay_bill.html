@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Thanh toán - HNK CLINIC</title>
+
+    <link rel="stylesheet" href="static/css/nurse_home.css">
+    <link rel="stylesheet" href="/static/css/cashier.css">
+</head>
+<body>
+
+<div>
+    <div class="container-left">LEFT</div>
+    <div class="container-right">
+        <div class="container-table" id="print-content">
+            <table>
+                <tr>
+                    <td colspan="2" class="title">HÓA ĐƠN THANH TOÁN</td>
+                </tr>
+                <tr>
+                    <td>Họ tên: {{ patient_name }}</td>
+                    <td>Ngày khám: {{ exam_date }}</td>
+                </tr>
+                <tr>
+                    <td>Mã phiếu: {{ promissory_note_id }}</td>
+                    <td>Ngày thanh toán: {{ paid_date }}</td>
+                </tr>
+                 <tr>
+                    <td>Tiền khám: {{"{:,.1f}".format(exam_fee)}} VND</td>
+                    <td>Tiền thuốc: {{"{:,.1f}".format(medicine_cost)}} VND </td>
+                </tr>
+                <tr>
+                    <td colspan="2">Tổng tiền: {{"{:,.1f}".format(total_cost)}} VND</td>
+                </tr>
+            </table>
+        </div>
+        <div class="issue-invoice"><button onclick="printInvoice()">Xuất hóa đơn</button></div>
+    </div>
+</div>
+
+
+<script>
+        function printInvoice() {
+            var printContent = document.getElementById("print-content").innerHTML;
+            var originalContent = document.body.innerHTML;
+
+            document.body.innerHTML = printContent;
+            window.print();
+
+            // Khôi phục nội dung ban đầu
+            document.body.innerHTML = originalContent;
+        }
+</script>
+</body>
+</html>
+

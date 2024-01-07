@@ -1,0 +1,44 @@
+{% extends 'staff_base.html' %}
+
+{% block title %} Trang thanh toán {% endblock %}
+
+<div class="container-fluid">
+    <!--header side bar-->
+    <div class="row sidebar flex-nowrap">
+        {% include 'cashier/header.html' %}
+
+        <!--body-->
+        <div class=" col py-3" style="margin-left:300px;">
+<!--            <h1 class="text-header text-dark text-center"> CHÀO MỪNG BẠN ĐẾN VỚI TRANG THU NGÂN</h1>-->
+ {% block content %}
+        <div class=" col py-3" style="margin-left:400px;">
+            <h2 class="text-dark text-center mt-5"> DANH SÁCH HÓA ĐƠN THANH TOÁN </h2>
+
+            <table border="1" class="container table table-striped table-bordered mt-3">
+                <thead class="bg-info">
+                <tr>
+                    <th>Mã phiếu</th>
+                    <th>Mã bệnh nhân</th>
+                    <th>Ngày khám</th>
+                    <th>Triệu chứng</th>
+                    <th>Chẩn đoán</th>
+                    <th></th>
+                </tr>
+                </thead>
+                <tbody>
+                {% for note in all_notes %}
+                <tr>
+                    <td>{{ note.id }}</td>
+                    <td>{{ note.appointment_id }}</td>
+                    <td>{{ note.date }}</td>
+                    <td>{{ note.symptom }}</td>
+                    <td>{{ note.forecast }}</td>
+                    <td>
+                        <button type="button" class="btn btn-success"><a href="{{ url_for('pay_info', appointment_id=note.appointment_id) }}">Thanh toán</a></button>
+                    </td>
+                </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+{% endblock %}
