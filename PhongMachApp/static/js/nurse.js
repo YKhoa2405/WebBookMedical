@@ -27,6 +27,11 @@ function deletePatient(patientId) {
 
 function filterByDate() {
     var selectedDate = document.getElementById('ngayKham').value;
+     if (!selectedDate) {
+        alert("Vui lòng chọn ngày trước khi nhấn Lọc");
+        return; // Dừng xử lý tiếp theo nếu ngày chưa được chọn
+    }
+
 
     fetch(`/get_patients_by_date?ngayKham=${selectedDate}`)
         .then(response => {

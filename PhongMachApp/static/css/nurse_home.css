@@ -1,6 +1,5 @@
-*{
-    font-family: Helvetica Neue, sans-serif
-}
+body{
+font-size:20px;}
 .sidebar1 {
   background-color: #7386d5;
   font-size: 18px;
@@ -35,13 +34,16 @@ input {
 .btn-dkkham {
   pointer-events: auto;
   margin-top: 10px;
-
+  font-size:20px;
+  padding:20px;
 }
 .content-side {
   margin-left: 300px;
 }
 /*body{
 font-size:20px;}*/
+.color-base{
+color:#7386d5;}
 
 .sidebar ul li a:hover {
   color: #7386d5;
@@ -161,3 +163,91 @@ border: none;}
 .table-medicine{
 padding:20px;
 margin-top:15px;}
+
+.image-yta {
+ background-image:url("/static/image/yta.png");
+    margin-left:300px;
+     background-position: center; /* Căn giữa */
+    background-size: cover; /* Tự điều chỉnh kích thước để bao phủ toàn bộ div */
+    background-repeat: no-repeat; /* Không lặp lại hình nền */
+
+    /* Các thuộc tính khác để thiết lập kiểu dáng cho div */
+   height: 100vh;
+}
+.image-bsi {
+    background-image: url("/static/image/bsi.png");
+    margin-left: 300px;
+    background-position: center;
+    background-size: cover;
+    background-repeat: no-repeat;
+    height: 100vh;
+}
+
+.card p{
+color: black;
+padding: 0 10px 0 10px;}
+
+.a-cancel {
+  display: block;
+  width: 100%;
+  font-weight:bold;
+  font-size:20px;
+ /* Điều chỉnh kích thước tối đa của nút nếu cần */
+  text-align: center;
+  padding: 10px; /* Điều chỉnh lề và padding nếu cần */
+  box-sizing: border-box; /* Đảm bảo padding không làm tăng kích thước của nút */
+  text-decoration: none;
+  color: white;
+}
+
+.a-cancel:hover {
+  /* Thêm hiệu ứng hover tùy ý */
+  opacity: 0.8;
+  /* Thay đổi màu sắc hoặc hiệu ứng khác nếu bạn muốn */
+}
+h1.text-center{
+color: #7386d5;}
+
+
+  .tb-kham{
+    width: 100%;
+    table-layout: fixed;
+    border-collapse: collapse;
+  }
+  .tb-kham thead,
+  .tb-kham tbody {
+    display: block;
+  }
+  .tb-kham thead {
+    width: calc(100% - 17px); /* Bù trừ thanh cuộn ngang */
+  }
+  .tb-kham tbody {
+    max-height: 450px;
+    width: 100%;
+    overflow-y: auto;
+    display: block;
+  }
+  .tb-kham tr {
+    display: flex;
+    flex-wrap: nowrap;
+  }
+  .tb-kham th,
+  .tb-kham td {
+    text-align: center;
+    padding: 8px;
+    border-bottom: 1px solid #ddd;
+    flex: 1 1 auto;
+    width: 160px; /* Điều chỉnh kích thước theo nhu cầu */
+    min-width: 0;
+  }
+  .tb-kham th:first-child,
+  .tb-kham td:first-child {
+    flex: 0 0 100px; /* Cột Mã phiếu */
+    width: 100px; /* Kích thước cột Mã phiếu */
+  }
+  .tb-kham th:nth-child(2),
+  .tb-kham td:nth-child(2) {
+    flex: 0 0 120px; /* Cột Mã bệnh nhân */
+    width: 120px; /* Kích thước cột Mã bệnh nhân */
+  }
+

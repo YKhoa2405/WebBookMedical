@@ -1,5 +1,5 @@
 import math, re
-
+from twilio.rest import Client
 import cloudinary.uploader
 from flask import render_template, request, redirect, url_for, session, jsonify, flash
 from flask_login import login_user, logout_user
@@ -87,7 +87,7 @@ def user_login():
             if user.user_role == UserRole.DOCTOR:
                 return redirect('doctor/patient_list')
             elif user.user_role == UserRole.NURSE:
-                return redirect('show_result')
+                return redirect('nurse/patient_list')
             elif user.user_role == UserRole.CASHIER:
                 return redirect('cashier')
             else:
@@ -145,16 +145,40 @@ def datLichKham():
     return render_template('datLichKham.html', err_msg=err_msg, err_msg1=err_msg1, current_page='datLichKham')
 
 
-# Danh sách bệnh nhân khám theo ngày đươcj y tá lọc
+# Danh sách bệnh nhân khám theo ngày hiển thị cho bác sĩ lập phiếu
+# @app.route('/doctor/patient_list')
+# def doctor_patient_list():
+#     today = date.today()  # Lấy ngày hiện tại
+#     # success= session.setdefault('success', False)
+#     medical_exams = utils.get_medical_exams_by_date(today)  # Lấy danh sách cuộc hẹn cho ngày hiện tại
+#     appointment_ids = [note.appointment_id for note in
+#                        PromissoryNote.query.all()]  # LẤY ID NHỮNG CUỘC HẸN RA ĐỂ CUSTOM BUTTON
+#     return render_template('doctor/patient_list.html', medical_exams=medical_exams, target_date=today,
+#                            appointment_ids=appointment_ids)
+#
+
+
 @app.route('/doctor/patient_list')
 def doctor_patient_list():
-    today = date.today()  # Lấy ngày hiện tại
-    # success= session.setdefault('success', False)
-    medical_exams = utils.get_medical_exams_by_date(today)  # Lấy danh sách cuộc hẹn cho ngày hiện tại
-    appointment_ids = [note.appointment_id for note in
-                       PromissoryNote.query.all()]  # LẤY ID NHỮNG CUỘC HẸN RA ĐỂ CUSTOM BUTTON
-    return render_template('doctor/patient_list.html', medical_exams=medical_exams, target_date=today,
-                           appointment_ids=appointment_ids)
+    today = date.today()
+    medical_exams = utils.get_medical_exams_by_date(today)
+    appointment_ids = [note.appointment_id for note in PromissoryNote.query.all()]
+
+    cccd = request.args.get('cccd')
+    filtered_exams = None
+    show_alert = False
+
+    if cccd:
+        filtered_exams = [exam for exam in medical_exams if exam.appointment.cccd == cccd]
+        if not filtered_exams:
+            show_alert = True
+
+    if show_alert:
+        flash('Không tìm thấy cuộc hẹn của số căn cước này!!!', 'danger')
+
+    return render_template('doctor/patient_list.html', medical_exams=filtered_exams or medical_exams,
+                           target_date=today, appointment_ids=appointment_ids)
+
 
 
 # Lap phieu kham
@@ -304,16 +328,16 @@ def add_patient():
 
         if existing_appointments_count >= max_appointments_allowed:
             flash('Đã đủ số lượng khám bệnh cho ngày này. Vui lòng chọn ngày khác.', 'danger')
-            return redirect(url_for('show_result'))
+            return redirect('/nurse/patient_list')
 
         # Thêm lịch hẹn mới vào cơ sở dữ liệu
         db.session.add(new_appointment)
         db.session.commit()
         flash('Thêm thông tin khám bệnh nhân thành công', 'success')
-        return redirect(url_for('show_result'))
+        return redirect('/nurse/patient_list')
 
 
-@app.route('/show_result')
+@app.route('/nurse/patient_list')
 def show_result():
     appointments = Appointment.query.all()
     appointment_list = MedicalExamList.query.all()  # Danh sách đã lập
@@ -357,7 +381,7 @@ def get_patients_by_date():
 
     if appointment_count == 0:
         flash('Không có bệnh nhân đăng ký lịch khám vào ngày này !!!', 'danger')
-        return redirect(url_for('show_result'))
+        return redirect('/nurse/patient_list')
 
     # Lưu danh sách bệnh nhân vào session
     session['selected_patients'] = [appointment.id for appointment in appointments_not_in_list]
@@ -399,12 +423,23 @@ def create_appointment_list():
                         appointment_id=patient_id
                     )
                     db.session.add(person)
-
-                    # Cập nhật trạng thái has_appointment_list của bệnh nhân
-
-                    # Gửi tin nhắn thông báo đến bệnh nhân (uncomment nếu cần)
+                    # twilio gửi sms
+                    # account_sid = 'ACb81b7f5d8233ec77aa3f822f47965153'
+                    # auth_token = '85de982771f3a3bfc779e6f921ff2f6d'
+                    # client = Client(account_sid, auth_token)
+                    #
                     # patient_phone_number = utils.get_patient_phone_number(patient_id)
-                    # utils.send_appointment_date_to_patient(patient_phone_number, appointment_date)
+                    # patient_name = utils.get_patient_name(patient_id)
+                    # appointment_date = utils.get_patient_date(patient_id)
+                    # # format định dạng sdt +84
+                    # international_format = '+84' + patient_phone_number[1:]
+                    # message = client.messages.create(
+                    #     body=f'Đăng ký khám thành công, hẹn {patient_name} đến khám vào ngày {appointment_date} tại phòng khám HKN',
+                    #     from_='+12059273657',
+                    #     to=international_format
+                    # )
+
+                    # print(message.sid)
             db.session.commit()
             session.pop('selected_patients', None)
 
@@ -416,11 +451,32 @@ def create_appointment_list():
 
 
 #  thu ngân
+
 @app.route("/cashier")
 def cashier_home():
-    all_notes = PromissoryNote.query.all()  # truy vấn phiếu khám
-    # prescriptions = Prescription.query.all()#truy phấn phiếu thuôcs
-    return render_template('cashier/cashier_home.html', all_notes=all_notes)
+    all_notes = PromissoryNote.query.all()  # Truy vấn phiếu khám
+    payment_status = {}
+
+    cccd_query = request.args.get('cccd_query')  # Lấy thông tin tìm kiếm từ URL
+
+    if cccd_query:
+        # Nếu có thông tin tìm kiếm, lọc theo CCCD
+        filtered_notes = PromissoryNote.query.filter_by(CCCD=cccd_query).all()
+        if not filtered_notes:
+            flash(f"Không có phiếu khám nào cho CCCD: {cccd_query}", 'warning')
+            return redirect(url_for('cashier_home'))
+        for note in filtered_notes:
+            payment_exists = Payment.query.filter_by(promissory_note_id=note.id).first()
+            payment_status[note.appointment_id] = payment_exists is not None
+
+        return render_template('cashier/cashier_home.html', all_notes=filtered_notes, payment_status=payment_status)
+
+    # Nếu không có thông tin tìm kiếm, hiển thị tất cả các phiếu khám
+    for note in all_notes:
+        payment_exists = Payment.query.filter_by(promissory_note_id=note.id).first()
+        payment_status[note.appointment_id] = payment_exists is not None
+
+    return render_template('cashier/cashier_home.html', all_notes=all_notes, payment_status=payment_status)
 
 
 @app.route('/pay_info/<appointment_id>', methods=['GET'])
@@ -452,7 +508,6 @@ def pay_info(appointment_id):
                            exam_fee=exam_fee,
                            medicine_cost=medicine_cost,
                            total_cost=total_cost)
-
 
 # admin
 @app.route('/admin/signin_admin', methods=['post'])

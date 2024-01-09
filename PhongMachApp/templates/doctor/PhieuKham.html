@@ -36,7 +36,7 @@
                                 <a style="width:100%; margin-top:10px;" href="#"
                                    class="btn btn-info"
                                    onclick="addToCart({{ m.id }} , '{{ m.name }}', '{{ m.medicineUnit_id }}' )">Thêm
-                                    thuốc
+                                    thuốc vào toa
                                 </a>
 
                             </div>
@@ -188,13 +188,19 @@
 
                 <div class="row creart_patient">
                     <button type="submit" class=" btn btn-success">Tạo phiếu</button>
+
                 </div>
+
             </form>
+
+                <a class="a-cancel btn btn-danger" href="/doctor/patient_list">Cancel</a>
+<!--                <button class="mt-3 btn btn-outline-danger"></button>-->
+
         </div>
     </div>
 </div>
 
-
+<script src="{{ url_for('static', filename='js/nurse.js') }}"></script>
 <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
 <script>
     // JavaScript code to handle the button click event

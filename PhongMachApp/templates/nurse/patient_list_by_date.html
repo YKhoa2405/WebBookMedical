@@ -1,11 +1,11 @@
 {% extends 'staff_base.html' %}
 
-{% block title %} FKWEJF {% endblock %}
+{% block title %} Danh sách khám{% endblock %}
 
 {% block content %}
-<div class=" imagesub content-side col py-3">
+<div class=" image-yta content-side col py-3">
     <div class="container">
-        <h1 class="text-center text-info mt-5">Danh sách bệnh nhân</h1>
+        <h1 class="text-center text-info mt-5">Danh sách khám bệnh</h1>
         <p class="alert alert-success text-center">Số lượng bệnh nhân đăng ký theo ngày: {{ appointment_count }}</p>
         {% with messages = get_flashed_messages(with_categories=true) %}
         {% if messages %}
@@ -20,7 +20,7 @@
         <label class="text-dark">Ngày khám</label>
         <input type="date" id="ngayKham" value="{{ selected_date }}">
 
-        <button class="btn btn-outline-info" onclick="filterByDate()">Lọc</button>
+<!--        <button class="btn btn-outline-info" onclick="filterByDate()">Lọc</button>-->
 
         <!-- Bảng danh sách bệnh nhân -->
         <div class="table-patient">
@@ -68,6 +68,7 @@
                 Thêm bệnh nhân
             </button>
 
+
             <!-- Modal -->
             {% include 'nurse/modal_dkk.html' %}
 
@@ -78,13 +79,12 @@
                         onclick="saveAppointmentList()">
                     Lập danh sách khám
                 </button>
-
-
-                <!-- Modal -->
-
-
             </form>
+              <button style="width:150px;" type="button" class="btn btn-danger btn">
+                  <a style="color:white;" href="/show_result"> Thoát</a>
+            </button>
         </div>
     </div>
 </div>
+<script src="{{ url_for('static', filename='js/nurse.js') }}"></script>
 {% endblock %}

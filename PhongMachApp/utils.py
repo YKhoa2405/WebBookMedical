@@ -1,6 +1,6 @@
 # Tuơng tác với csdl
 from datetime import datetime
-
+from datetime import date
 from flask import request, flash
 from flask import session
 from sqlalchemy import func, extract
@@ -108,22 +108,11 @@ def get_patient_phone_number(patient_id):
         return patient.sdt
     return None
 
-
-def send_appointment_date_to_patient(patient_phone_number, appointment_date):
-    message = (f"Phong kham HNK thong bao ngay kham benh cua ban la {appointment_date}.")
-
-    # Gửi tin nhắn đến số điện thoại bệnh nhân
-    response = sms.send_message({
-        'from': 'Vonage APIs',
-        'to': patient_phone_number,
-        'text': message,
-        'type': 'unicode'
-    })
-
-    if response['messages'][0]['status'] == '0':
-        print(f"Message sent successfully to {patient_phone_number}.")
-    else:
-        print(f"Message to {patient_phone_number} failed with error: {response['messages'][0]['error-text']}")
+def get_patient_date(patient_id):
+    patient = Appointment.query.get(patient_id)
+    if patient:
+        return patient.calendar
+    return None
 
 
 def format_date(input_date):
@@ -149,6 +138,10 @@ def get_medical_exams_by_date(target_date):
         Appointment.calendar == target_date).all()
     return medical_exams
 
+def get_medical_exam_by_cccd(cccd):
+    # Tìm kiếm cuộc hẹn dựa trên CCCD
+    medical_exam = Appointment.query.filter_by(cccd=cccd).first()
+    return medical_exam
 
 def get_patient_info(appointment_id):
     appointment = Appointment.query.filter_by(id=appointment_id).first()
