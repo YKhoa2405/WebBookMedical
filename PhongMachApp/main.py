@@ -90,6 +90,8 @@ def user_login():
                 return redirect('nurse/patient_list')
             elif user.user_role == UserRole.CASHIER:
                 return redirect('cashier')
+            elif user.user_role == UserRole.ADMIN:
+                return redirect('admin')
             else:
                 return redirect(url_for('index'))
         else:
@@ -108,9 +110,44 @@ def user_load(user_id):
     return utils.get_user_by_id(user_id=user_id)
 
 
+# xem profile và lưu hồ sơ khám bệnh
 @app.route("/profile")
 def profile():
+    # def medical_history():
+    if current_user.is_authenticated:
+        user_id = current_user.id
+        medical_records = (db.session.query(PromissoryNote)
+                           .join(Appointment, PromissoryNote.appointment_id == Appointment.id)
+                           .filter(Appointment.user_id == user_id)
+                           .options(db.joinedload(PromissoryNote.prescriptions).joinedload(Prescription.medicine))
+                           .all())
+
+        return render_template('profile.html', medical_records=medical_records)
     return render_template('profile.html')
+
+
+@app.route('/edit_profile', methods=['POST'])
+def edit_profile():
+    if request.method == 'POST':
+        new_name = request.form['new_name']
+        new_email = request.form['new_email']
+        new_phone = request.form['new_phone']
+
+        # Thực hiện tìm và cập nhật thông tin người dùng trong cơ sở dữ liệu
+        user_id_to_update = current_user.id  # ID của người dùng cần cập nhật, đây chỉ là ví dụ
+        user = User.query.get(user_id_to_update)
+
+        if user:
+            user.name = new_name
+            user.email = new_email
+            user.phone = new_phone
+
+            db.session.commit()
+            return jsonify(
+                {'message': 'Thông tin đã được cập nhật thành công'})  # Trả về thông báo khi cập nhật thành công
+
+        return jsonify({
+            'message': 'Không tìm thấy người dùng để cập nhật'})  # Trả về thông báo khi không tìm thấy người dùng để cập nhật
 
 
 @app.route("/datLichKham", methods=['get', 'post'])
@@ -136,8 +173,9 @@ def datLichKham():
             if existing_appointments_count >= max_appointments_allowed:
                 err_msg = "Lỗi đặt lịch! Đã đủ số lượng đăng kí khám"
             else:
+                user_id = current_user.id
                 utils.add_lich_kham(name=name, cccd=cccd, gender=gender, sdt=sdt, birthday=birthday, address=address,
-                                    calendar=calendar)
+                                    calendar=calendar, user_id=user_id)
                 err_msg = "Đặt lịch khám thành công!"
         except Exception as e:
             print(e)
@@ -145,40 +183,23 @@ def datLichKham():
     return render_template('datLichKham.html', err_msg=err_msg, err_msg1=err_msg1, current_page='datLichKham')
 
 
-# Danh sách bệnh nhân khám theo ngày hiển thị cho bác sĩ lập phiếu
-# @app.route('/doctor/patient_list')
-# def doctor_patient_list():
-#     today = date.today()  # Lấy ngày hiện tại
-#     # success= session.setdefault('success', False)
-#     medical_exams = utils.get_medical_exams_by_date(today)  # Lấy danh sách cuộc hẹn cho ngày hiện tại
-#     appointment_ids = [note.appointment_id for note in
-#                        PromissoryNote.query.all()]  # LẤY ID NHỮNG CUỘC HẸN RA ĐỂ CUSTOM BUTTON
-#     return render_template('doctor/patient_list.html', medical_exams=medical_exams, target_date=today,
-#                            appointment_ids=appointment_ids)
-#
-
-
+# HIỂN THỊ DANH SÁCH Để bác sĩ lập phiếu khám
 @app.route('/doctor/patient_list')
 def doctor_patient_list():
     today = date.today()
-    medical_exams = utils.get_medical_exams_by_date(today)
-    appointment_ids = [note.appointment_id for note in PromissoryNote.query.all()]
+    medical_exams = utils.get_medical_exams_by_date(today)#lấy danh sách khám ngày hôm nay
+    # medical_exams=MedicalExamList.query.all() ##test
+    appointment_ids = [note.appointment_id for note in PromissoryNote.query.all()]#check
 
     cccd = request.args.get('cccd')
     filtered_exams = None
-    show_alert = False
 
     if cccd:
         filtered_exams = [exam for exam in medical_exams if exam.appointment.cccd == cccd]
         if not filtered_exams:
-            show_alert = True
-
-    if show_alert:
-        flash('Không tìm thấy cuộc hẹn của số căn cước này!!!', 'danger')
-
+            flash('Không tìm thấy cuộc hẹn của số căn cước này!!!', 'danger')
     return render_template('doctor/patient_list.html', medical_exams=filtered_exams or medical_exams,
                            target_date=today, appointment_ids=appointment_ids)
-
 
 
 # Lap phieu kham
@@ -272,15 +293,15 @@ def create_prescription():
 
             # Thêm tất cả các Prescription vào session cùng một lúc
             db.session.add_all(medicine_list)
-            db.session.commit()  # Commit sau khi thêm tất cả các Prescription vào session
+            db.session.commit()
 
-            session['success'] = True
+            # session['success'] = True
             session.pop('cart', None)
         flash(f'LẬP PHIẾU KHÁM THÀNH CÔNG!!!!', 'success')
         return redirect('/doctor/patient_list')
 
 
-# lịch sử khám
+# lịch sử khám trong lập phiếu khám
 @app.route('/fetch_medical_history', methods=['POST'])
 def fetch_medical_history():
     cccd = request.form.get('cccd')
@@ -309,34 +330,44 @@ def add_patient():
         address = request.form['address']
         calendar = request.form['calendar']
 
-        new_appointment = Appointment(
-            name=name,
-            cccd=cccd,
-            gender=gender,
-            sdt=sdt,
-            birthday=birthday,
-            address=address,
-            calendar=calendar
-        )
+        try:
+            user_id = current_user.id
 
-        # Kiểm tra số lượng lịch hẹn cho ngày đã chọn
-        existing_appointments_count = Appointment.query.filter_by(calendar=calendar).count()
+            new_appointment = Appointment(
+                name=name,
+                cccd=cccd,
+                gender=gender,
+                sdt=sdt,
+                birthday=birthday,
+                address=address,
+                calendar=calendar,
+                user_id=user_id  # Thêm user_id vào lịch hẹn mới
+            )
 
-        # Truy vấn giá trị patient_quantity từ bảng Regulation
-        regulation = Regulation.query.first()
-        max_appointments_allowed = regulation.patient_quantity
+            # Kiểm tra số lượng lịch hẹn cho ngày đã chọn
+            existing_appointments_count = Appointment.query.filter_by(calendar=calendar).count()
 
-        if existing_appointments_count >= max_appointments_allowed:
-            flash('Đã đủ số lượng khám bệnh cho ngày này. Vui lòng chọn ngày khác.', 'danger')
+            # Truy vấn giá trị patient_quantity từ bảng Regulation
+            regulation = Regulation.query.first()
+            max_appointments_allowed = regulation.patient_quantity
+
+            if existing_appointments_count >= max_appointments_allowed:
+                flash('Đã đủ số lượng khám bệnh cho ngày này. Vui lòng chọn ngày khác.', 'danger')
+                return redirect('/nurse/patient_list')
+
+            # Thêm lịch hẹn mới vào cơ sở dữ liệu
+            db.session.add(new_appointment)
+            db.session.commit()
+            flash('Thêm thông tin khám bệnh nhân thành công', 'success')
             return redirect('/nurse/patient_list')
 
-        # Thêm lịch hẹn mới vào cơ sở dữ liệu
-        db.session.add(new_appointment)
-        db.session.commit()
-        flash('Thêm thông tin khám bệnh nhân thành công', 'success')
-        return redirect('/nurse/patient_list')
+        except Exception as e:
+            print(e)
+            flash('Đã xảy ra lỗi khi thêm thông tin khám bệnh nhân', 'danger')
+            return redirect('/nurse/patient_list')
 
 
+# hiển thị danh sách đăng kí khám
 @app.route('/nurse/patient_list')
 def show_result():
     appointments = Appointment.query.all()
@@ -349,18 +380,13 @@ def show_result():
 # xóa bệnh nhân khỏi db
 @app.route('/patients/<int:appointment_id>/delete', methods=['POST'])
 def delete_patient(appointment_id):
-    appointment = Appointment.query.get_or_404(appointment_id)
+    appointment = Appointment.query.get(appointment_id)
     db.session.delete(appointment)
     db.session.commit()
     appointments = Appointment.query.all()
-    # new_id = 1
-    #
-    # for appoinment in appointments:
-    #     appoinment.id = new_id
-    #     new_id += 1
-
     db.session.commit()
-    return flash('Xóa bệnh nhân thành công', 'success')
+    flash('Xóa bệnh nhân thành công', 'success')
+    return redirect('/nurse/patient_list')
 
 
 # lọc bệnh nhân theo ngày khám
@@ -374,6 +400,7 @@ def get_patients_by_date():
 
     # Lọc danh sách các bệnh nhân chưa có trong danh sách khám
     appointments = Appointment.query.filter_by(calendar=selected_date).all()
+    # sau đó lấy các lịch hẹn có ngày kha trùng với ngày chọn lọc
     appointments_not_in_list = [appointment for appointment in appointments if
                                 appointment.id not in appointments_in_list]
 
@@ -405,41 +432,31 @@ def create_appointment_list():
         user_id = current_user.get_id()
         if appointment_date:
             for patient_id in selected_patients:
-                # Kiểm tra xem bệnh nhân đã có lịch hẹn trong danh sách khám hay chưa
-                existing_appointment = MedicalExamList.query.filter_by(appointment_id=patient_id).first()
+                person = MedicalExamList(
+                    list_code=list_code,
+                    created_date=datetime.now().date(),
+                    appointment_date=appointment_date,
+                    user_id=user_id,
+                    appointment_id=patient_id
+                )
+                db.session.add(person)
+                # twilio gửi sms
+                # account_sid = 'ACb81b7f5d8233ec77aa3f822f47965153'
+                # auth_token = '85de982771f3a3bfc779e6f921ff2f6d'
+                # client = Client(account_sid, auth_token)
+                #
+                # patient_phone_number = utils.get_patient_phone_number(patient_id)
+                # patient_name = utils.get_patient_name(patient_id)
+                # appointment_date = utils.get_patient_date(patient_id)
+                # # format định dạng sdt +84
+                # international_format = '+84' + patient_phone_number[1:]
+                # message = client.messages.create(
+                #     body=f'Đăng ký khám thành công, hẹn {patient_name} đến khám vào ngày {appointment_date} tại phòng khám HKN',
+                #     from_='+12059273657',
+                #     to=international_format
+                # )
 
-                if existing_appointment:
-                    flash(
-                        f'Lịch hẹn của bệnh nhân {utils.get_patient_name(patient_id)} đã được lập danh sách.Vui lòng lập danh sách những bệnh nhân khác!!',
-                        'danger')
-                    return redirect(url_for('get_patients_by_date', ngayKham=appointment_date))
-                else:
-                    # Nếu chưa có, thực hiện lưu thông tin
-                    person = MedicalExamList(
-                        list_code=list_code,
-                        created_date=datetime.now().date(),
-                        appointment_date=appointment_date,
-                        user_id=user_id,
-                        appointment_id=patient_id
-                    )
-                    db.session.add(person)
-                    # twilio gửi sms
-                    # account_sid = 'ACb81b7f5d8233ec77aa3f822f47965153'
-                    # auth_token = '85de982771f3a3bfc779e6f921ff2f6d'
-                    # client = Client(account_sid, auth_token)
-                    #
-                    # patient_phone_number = utils.get_patient_phone_number(patient_id)
-                    # patient_name = utils.get_patient_name(patient_id)
-                    # appointment_date = utils.get_patient_date(patient_id)
-                    # # format định dạng sdt +84
-                    # international_format = '+84' + patient_phone_number[1:]
-                    # message = client.messages.create(
-                    #     body=f'Đăng ký khám thành công, hẹn {patient_name} đến khám vào ngày {appointment_date} tại phòng khám HKN',
-                    #     from_='+12059273657',
-                    #     to=international_format
-                    # )
-
-                    # print(message.sid)
+                # print(message.sid)
             db.session.commit()
             session.pop('selected_patients', None)
 
@@ -451,32 +468,31 @@ def create_appointment_list():
 
 
 #  thu ngân
-
 @app.route("/cashier")
 def cashier_home():
     all_notes = PromissoryNote.query.all()  # Truy vấn phiếu khám
-    payment_status = {}
+    payment_status = {}   # Tạo một từ điển để theo dõi trạng thái thanh toán của từng phiếu khám
 
     cccd_query = request.args.get('cccd_query')  # Lấy thông tin tìm kiếm từ URL
 
     if cccd_query:
         # Nếu có thông tin tìm kiếm, lọc theo CCCD
-        filtered_notes = PromissoryNote.query.filter_by(CCCD=cccd_query).all()
+        filtered_notes = PromissoryNote.query.filter_by(CCCD=cccd_query).all() #Lọc các phiếu khám theo CCCD nếu có.
         if not filtered_notes:
             flash(f"Không có phiếu khám nào cho CCCD: {cccd_query}", 'warning')
             return redirect(url_for('cashier_home'))
-        for note in filtered_notes:
+
+        # Kiểm tra trạng thái thanh toán của từng phiếu khám lọc được
+        for note in filtered_notes:# Nếu không có phiếu khám nào được tìm thấy, thông báo và chuyển hướng về trang cashier_home.
+            payment_exists = Payment.query.filter_by(promissory_note_id=note.id).first()#Kiểm tra xem có thanh toán nào liên quan đến phiếu khám hiện tại hay không.
+            payment_status[note.appointment_id] = payment_exists is not None# Cập nhật trạng thái thanh toán trong từ điển. Nếu thanh toán tồn tại, giá trị là True, ngược lại là False
+        return render_template('cashier/cashier_home.html', all_notes=filtered_notes, payment_status=payment_status)
+    else:
+    # Nếu không có thông tin tìm kiếm, hiển thị tất cả các phiếu khám
+        for note in all_notes:# duyệt qua tất cả các phiếu kha
             payment_exists = Payment.query.filter_by(promissory_note_id=note.id).first()
             payment_status[note.appointment_id] = payment_exists is not None
-
-        return render_template('cashier/cashier_home.html', all_notes=filtered_notes, payment_status=payment_status)
-
-    # Nếu không có thông tin tìm kiếm, hiển thị tất cả các phiếu khám
-    for note in all_notes:
-        payment_exists = Payment.query.filter_by(promissory_note_id=note.id).first()
-        payment_status[note.appointment_id] = payment_exists is not None
-
-    return render_template('cashier/cashier_home.html', all_notes=all_notes, payment_status=payment_status)
+        return render_template('cashier/cashier_home.html', all_notes=all_notes, payment_status=payment_status)
 
 
 @app.route('/pay_info/<appointment_id>', methods=['GET'])
@@ -509,6 +525,7 @@ def pay_info(appointment_id):
                            medicine_cost=medicine_cost,
                            total_cost=total_cost)
 
+
 # admin
 @app.route('/admin/signin_admin', methods=['post'])
 def signin_admin():
@@ -518,6 +535,8 @@ def signin_admin():
     user = utils.check_login(email=email, password=password)
     if user:
         login_user(user=user)
+    else:
+        flash('Đăng nhập không thành công. Vui lòng kiểm tra email và mật khẩu.', 'danger')
     return redirect(utils.get_prev_url())
 
 

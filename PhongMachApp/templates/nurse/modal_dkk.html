@@ -30,7 +30,7 @@
                     <div class="form-check-inline  text-dark pt-3">
                         <label class="form-check-label">
                             <input type="radio" class="form-check-input" name="optradio"
-                                   value="Nam">Nam
+                                   value="Nam" checked>Nam
                         </label>
                     </div>
                     <div class="form-check-inline  text-dark pt-3">
@@ -70,9 +70,10 @@
 
                 </div>
                 <div class="modal-footer">
+                     <div class="modal-footer">
                     <button type="submit" value="submit" class="btn btn-primary">Submit</button>
-                    <button type="button" class="btn btn-danger" data-bs-dismiss="modal">Close
-                    </button>
+                    <button type="button" class="btn btn-danger" data-bs-dismiss="modal">Close</button>
+                </div>
                 </div>
 
             </form>
@@ -83,5 +84,27 @@
 <script>
     const today = new Date().toISOString().split('T')[0];
     document.getElementById('calendar').setAttribute('min', today);
+    <script>
+    const today = new Date().toISOString().split('T')[0];
+    document.getElementById('calendar').setAttribute('min', today);
+
+    function validateForm() {
+        var name = document.getElementById('name').value;
+        var cccd = document.getElementById('cccd').value;
+        var radioChecked = document.querySelector('input[name="optradio"]:checked');
+        var sdt = document.getElementById('sdt').value;
+        var birthday = document.getElementById('birthday').value;
+        var address = document.getElementById('address').value;
+        var calendar = document.getElementById('calendar').value;
+
+        if (name === '' || cccd === '' || radioChecked === null || sdt === '' || birthday === '' || address === '' || calendar === '') {
+            alert('Please fill out all fields before submitting.');
+            return false; // Prevent form submission
+        }
+
+        return true; // Allow form submission
+    }
 </script>
+</script>
+
 {% endblock %}

@@ -191,7 +191,33 @@ a:hover {
 }
 
 
+.navbar-footer{
+margin-top:160px;
+}
 
 
 
+
+    .modal-content {
+        padding: 20px;
+    }
+
+    /* Định dạng cho các input và label trong form */
+    form label {
+        display: block;
+    }
+
+    form input[type="text"],
+    form input[type="email"] {
+        width: 100%;
+        padding:10px;
+        display: block;
+        border: 1px solid #ced4da;
+        border-radius: 0.25rem;
+    }
+
+    /* Định dạng cho nút Submit và Close trong modal footer */
+    .modal-footer button {
+        padding: 0.5rem 1rem;
+    }
 

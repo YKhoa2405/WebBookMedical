@@ -14,7 +14,7 @@ import hashlib
 
 
 def add_user(name, email, password, phone, **kwargs):
-    # password = str(hashlib.md5(password.strip().encode('utf-8')).hexdigest())
+    password = str(hashlib.md5(password.strip().encode('utf-8')).hexdigest())
     user = User(name=name.strip(),
                 email=email.strip(),
                 phone=phone.strip(),
@@ -24,7 +24,7 @@ def add_user(name, email, password, phone, **kwargs):
     db.session.commit()
 
 
-def add_lich_kham(name, cccd, gender, sdt, birthday, address, calendar):
+def add_lich_kham(name, cccd, gender, sdt, birthday, address, calendar,user_id):
     # birthday = datetime.strptime(birthday, '%d-%m-%Y').date()
     # calendar = datetime.strptime(calendar, '%d-%m-%Y').date()
     datLichKham = Appointment(
@@ -34,17 +34,16 @@ def add_lich_kham(name, cccd, gender, sdt, birthday, address, calendar):
         sdt=sdt.strip(),
         birthday=birthday,
         address=address.strip(),
-        calendar=calendar)
+        calendar=calendar,
+        user_id=user_id)
     db.session.add(datLichKham)
     db.session.commit()
 
-
 def check_login(email, password):
     if email and password:
-        # password = str(hashlib.md5(password.strip().encode('utf-8')).hexdigest())
+        password = str(hashlib.md5(password.strip().encode('utf-8')).hexdigest())
         return User.query.filter(User.email.__eq__(email.strip()),
                                  User.password.__eq__(password)).first()
-
 
 def get_prev_url():
     referer = request.headers.get('Referer')
@@ -53,7 +52,6 @@ def get_prev_url():
         return referer
     else:
         return '/'
-
 
 def load_medicineUnit():
     return MedicineUnit.query.all()
@@ -68,38 +66,29 @@ def load_medicine(kw=None, page=1):
     start = (page - 1) * page_size
     end = start + page_size
     medicines = medicines_query.slice(start, end).all()
-
     return medicines
-
 
 def count_medicine():
     return Medicine.query.count()
 
-
 def get_email(user_email, ):
     return User.query.filter_by(email=user_email).first()
-
 
 def get_user_by_id(user_id):
     return User.query.get(user_id)
 
-
 def get_medicine_by_id(medicine_id):
     return Medicine.query.get(medicine_id)
-
 
 def count_cart(cart):
     total_quantity = 0
     total_amount = 0
-
     if cart:
         for c in cart.values():
             total_quantity += c.get('quantity', 0)
-
     return {
         'total_quantity': total_quantity
     }
-
 
 # y tas
 def get_patient_phone_number(patient_id):
@@ -114,25 +103,19 @@ def get_patient_date(patient_id):
         return patient.calendar
     return None
 
-
 def format_date(input_date):
     # Chuyển đổi ngày từ chuỗi "YYYY-MM-DD" sang đối tượng datetime
     formatted_date = datetime.strptime(input_date, "%Y-%m-%d")
 
     # Định dạng lại ngày thành "Ngày tháng Năm"
     result_date = formatted_date.strftime("%d-%m-%Y")
-
     return result_date
-
 
 def get_patient_name(patient_id):
     patient = Appointment.query.filter_by(id=patient_id).first()
     return patient.name if patient else None
 
-
-# bác sĩ
-
-# lấy ngày khám hôm nay trong medical exam list
+# lấy danh sách khám theo ngày
 def get_medical_exams_by_date(target_date):
     medical_exams = MedicalExamList.query.join(Appointment, MedicalExamList.appointment_id == Appointment.id).filter(
         Appointment.calendar == target_date).all()
@@ -177,8 +160,6 @@ def medical_stats(year):
 
     if year:
         medi = medi.filter(func.extract('year', PromissoryNote.date) == year)
-    else:
-        medi.all()
     return medi.all()
 
 

@@ -41,11 +41,9 @@ function filterByDate() {
             return response.json();
         })
         .then(data => {
-            // Xử lý dữ liệu trả về ở đây (nếu cần)
             console.log(data);
-            // Ví dụ: Hiển thị dữ liệu lên bảng hoặc thực hiện các thao tác khác
         })
-        .catch(error => console.error('There was an error!', error));
+        .catch(error => console.error('LỖI!', error));
 
     window.location.href = `/get_patients_by_date?ngayKham=${selectedDate}`;
 }

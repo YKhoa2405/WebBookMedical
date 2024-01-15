@@ -200,7 +200,6 @@
     </div>
 </div>
 
-<script src="{{ url_for('static', filename='js/nurse.js') }}"></script>
 <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
 <script>
     // JavaScript code to handle the button click event
@@ -209,7 +208,7 @@
 
         $.ajax({
             type: 'POST',
-            url: '/fetch_medical_history', // Endpoint to fetch medical history based on CCCD
+            url: '/fetch_medical_history',
             data: { cccd: cccdToQuery },
             success: function(response) {
                 var modalBody = $('#mymodalHistory').find('.modal-body');

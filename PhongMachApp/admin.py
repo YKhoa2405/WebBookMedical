@@ -45,7 +45,7 @@ class ChangeRegulationView(AdminView):
 class ReportStatistics(AdminBaseView):
     @expose('/')
     def index(self):
-        year = request.args.get('year', datetime.now().month)
+        year = request.args.get('year', datetime.now().year)
         kw = request.args.get('kw')
         from PhongMachApp import utils
 
@@ -53,13 +53,13 @@ class ReportStatistics(AdminBaseView):
         medicine_message = 'Không có dữ liệu, vui lòng nhập lại' if not medicine_stats else None
 
         medical_stats = utils.medical_stats(year=year)
-        medical_message = 'Không có dữ liệu, vui lòng nhập lại' if not medical_stats else None
+        revenue_stats = utils.revenue_stats(year=year)
 
-        revenue_stats = utils.revenue_stats(year)
+        medical_message = 'Không có dữ liệu, vui lòng nhập lại' if not medical_stats else None
 
         return self.render('/admin/report_statistics.html', medicine_chart=medicine_stats,
                            medical_chart=medical_stats, revenue_chart=revenue_stats, medicine_message=medicine_message,
-                           medical_message=medical_message,)
+                           medical_message=medical_message)
 
 
 class LogoutView(BaseView):

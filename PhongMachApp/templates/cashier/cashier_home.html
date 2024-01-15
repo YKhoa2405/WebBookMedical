@@ -30,6 +30,7 @@
             <th>Mã bệnh nhân</th>
             <th>Ngày khám</th>
             <th>Họ và tên</th>
+            <th>CCCD</th>
             <th>Chẩn đoán</th>
             <th>Trạng thái</th>
 
@@ -42,17 +43,18 @@
             <td>{{ note.appointment_id }}</td>
             <td>{{ note.date }}</td>
             <td>{{ note.appointment.name }}</td>
+            <td>{{ note.appointment.cccd}}</td>
             <td>{{ note.forecast }}</td>
             <td>
                 {% if note.appointment_id in payment_status %}
-                {% if payment_status[note.appointment_id] %}
-                <!-- Nếu đã thanh toán, hiển thị nút "Hoàn thành" -->
-                <button type="button" class="btn btn-secondary" disabled>Hoàn thành</button>
-                {% else %}
-                <!-- Nếu chưa thanh toán, hiển thị nút "Thanh toán" -->
-                <button type="button" class="btn btn-success" onclick="pay({{ note.appointment_id }})">Thanh toán
-                </button>
-                {% endif %}
+                    {% if payment_status[note.appointment_id] %}
+                    <!-- Nếu đã thanh toán, hiển thị nút "Hoàn thành" -->
+                    <button type="button" class="btn btn-secondary" disabled>Hoàn thành</button>
+                    {% else %}
+                    <!-- Nếu chưa thanh toán, hiển thị nút "Thanh toán" -->
+                    <button type="button" class="btn btn-success" onclick="pay({{ note.appointment_id }})">Thanh toán
+                    </button>
+                    {% endif %}
                 {% endif %}
             </td>
         </tr>

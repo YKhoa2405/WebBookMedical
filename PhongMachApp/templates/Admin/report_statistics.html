@@ -2,11 +2,11 @@
 
 {% block content %}
 <h1 class="text-center">THỐNG KÊ BÁO CÁO</h1>
-<div class="content-wrap">
-    <button onclick="showContent('content1')">Doanh thu theo tháng</button>
-    <button onclick="showContent('content2')">Tần suất khám</button>
-    <button onclick="showContent('content3')">Tần suất sử dụng thuốc</button>
-</div>
+<!--<div class="content-wrap">-->
+<!--    <button onclick="showContent('content1')">Doanh thu theo tháng</button>-->
+<!--    <button onclick="showContent('content2')">Tần suất khám</button>-->
+<!--    <button onclick="showContent('content3')">Tần suất sử dụng thuốc</button>-->
+<!--</div>-->
 <!--Doanh thu theo tháng-->
 <div class="container" id="content1" style="margin-top:20px;">
     <form id="searchForm">
@@ -144,74 +144,76 @@
     let labels_medicine = [], labels_revenue = [], labels_medical = []
     let datasets_medicine = [],datasets_revenue = [],datasets_medical = []
 
-<!--thống kê thuốc-->
-    {% for m in medicine_chart %}
-
-    labels_medicine.push('{{ m[1] }}')
-    datasets_medicine.push({{ m[3] }})
-
+    <!--thống kê thuốc-->
+    {% for m in medicine_chart%}
+        labels_medicine.push('{{ m[1] }}')
+        datasets_medicine.push({{ m[3] }})
     {% endfor %}
 
     <!--thống kê lượng bệnh nhân theo tháng-->
-    {% for medi in medical_chart %}
-
-    labels_medical.push('{{ medi[0] }}')
-    datasets_medical.push({{ medi[1] }})
-
+    {% for medireve in medical_chart %}
+        labels_medical.push('{{ medireve[0] }}')
+        datasets_medical.push({{ medireve[1] }})
     {% endfor %}
 
     <!--Thống kê doanh thu theo tháng-->
     {% for reve in revenue_chart %}
-
-    labels_revenue.push('{{ reve[0] }}')
-    datasets_revenue.push({{ reve[1] }})
-
+        labels_revenue.push('{{ reve[0] }}')
+        datasets_revenue.push({{ reve[1] }})
     {% endfor %}
 
+    function getRandomColor() {
+        var r = Math.floor(Math.random() * 256);
+        var g = Math.floor(Math.random() * 256);
+        var b = Math.floor(Math.random() * 256);
 
+        var rgbColor = 'rgb(' + r + ',' + g + ',' + b + ')';
 
-   window.onload = function() {
-       const ctxRevenue = document.getElementById('revenueChart');
-       const ctxMedical = document.getElementById('medicalChart');
-       const ctxMedicine = document.getElementById('medicineChart');
+        return rgbColor;
+    }
 
+    window.onload = function() {
+        const ctxRevenue = document.getElementById('revenueChart').getContext('2d');
+        const ctxMedical = document.getElementById('medicalChart').getContext('2d');
+        const ctxMedicine = document.getElementById('medicineChart').getContext('2d');
 
-       loadChart(ctxRevenue, 'bar', 'Doanh thu theo tháng', labels_revenue, datasets_revenue);
-       loadChart(ctxMedical, 'line', 'Tần suất khám theo tháng', labels_medical, datasets_medical);
-       loadChart(ctxMedicine, 'doughnut', 'Số lần sử dụng thuốc', labels_medicine, datasets_medicine);
-   }
+        loadChart(ctxRevenue, 'bar', 'Doanh thu theo tháng', labels_revenue, datasets_revenue);
+        loadChart(ctxMedical, 'line', 'Tần suất khám theo tháng', labels_medical, datasets_medical);
+        loadChart(ctxMedicine, 'doughnut', 'Số lần sử dụng thuốc', labels_medicine, datasets_medicine);
+    }
 
-   function loadChart(ctx, type, label, labels, datasets) {
-       const myChart = new Chart(ctx, {
-           type: type,
-           data: {
-               labels: labels,
-               datasets: [{
-                   label: label,
-                   data: datasets,
-                   borderWidth: 1
-               }]
-           },
-           options: {
-               scales: {
-                   y: {
-                       beginAtZero: true
-                   }
-               }
-           }
-       });
-   }
-</script>
-
-<script>
-    function showContent(contentId) {
-      document.getElementById('content1').style.display = 'none';
-      document.getElementById('content2').style.display = 'none';
-      document.getElementById('content3').style.display = 'none';
-
-      document.getElementById(contentId).style.display = 'block';
+    function loadChart(ctx, type, label, labels, datasets) {
+        const myChart = new Chart(ctx, {
+            type: type,
+            data: {
+                labels: labels,
+                datasets: [{
+                    label: label,
+                    data: datasets,
+                    backgroundColor: datasets.map(() => getRandomColor()),
+                    borderWidth: 2
+                }]
+            },
+            options: {
+                scales: {
+                    y: {
+                        beginAtZero: true
+                    }
+                }
+            }
+        });
     }
 </script>
+
+<!--<script>-->
+<!--    function showContent(contentId) {-->
+<!--      document.getElementById('content1').style.display = 'none';-->
+<!--      document.getElementById('content2').style.display = 'none';-->
+<!--      document.getElementById('content3').style.display = 'none';-->
+
+<!--      document.getElementById(contentId).style.display = 'block';-->
+<!--    }-->
+<!--</script>-->
 
 
 {% endblock %}

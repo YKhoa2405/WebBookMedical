@@ -36,8 +36,8 @@
                 {% endif %}
                 {{ current_user.name }}</a>
             <div class="dropdown-menu">
-                <a class="dropdown-item" href="#">Lịch sử thanh toán</a>
-                <a class="dropdown-item" href="{{ url_for('profile') }}">Hồ sơ</a>
+<!--                <a class="dropdown-item" href="/medical_history">Lịch sử khám bệnh</a>-->
+                <a class="dropdown-item" href="{{ url_for('profile') }}">Hồ sơ bệnh nhân</a>
                 <a class="dropdown-item" href="{{ url_for('logout') }}">Đăng xuất</a>
             </div>
         </li>

@@ -98,6 +98,9 @@ class Appointment(Basemodel):  # LỊCH HẸN
     medical_exam_lists = db.relationship('MedicalExamList',
                                          back_populates='appointment')  # Quan hệ với bảng MedicalExamList
 
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'))  # Thêm khóa ngoại tới bảng User
+    user = db.relationship('User', backref='appointments')  # Quan hệ với bảng User
+
 
 # Danh sách khám gửi cho bác sĩ
 class MedicalExamList(db.Model):  # Appointment list
